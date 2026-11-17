@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import DashboardDispatcher from '../pages/dashboards/DashboardDispatcher';
 import ApartmentsPage from '../pages/apartments/ApartmentsPage';
+import OwnersPage from '../pages/owners/OwnersPage';
+import FeesPage from '../pages/fees/FeesPage';
+import PaymentsPage from '../pages/payments/PaymentsPage';
 import ModulePlaceholder from '../pages/ModulePlaceholder';
 
 export default function AppRoutes() {
@@ -14,36 +17,9 @@ export default function AppRoutes() {
 
         {/* Syndic Modules */}
         <Route path="/apartments" element={<ApartmentsPage />} />
-        <Route
-          path="/owners"
-          element={
-            <ModulePlaceholder
-              title="Répertoire des Propriétaires"
-              moduleName="Administration · Propriétaires"
-              description="Annuaire des copropriétaires, coordonnées, transferts de propriété et historique des actes."
-            />
-          }
-        />
-        <Route
-          path="/fees"
-          element={
-            <ModulePlaceholder
-              title="Charges de Copropriété"
-              moduleName="Finance · Charges"
-              description="Émission des appels de fonds mensuels, charges spéciales, suivi du recouvrement et relances."
-            />
-          }
-        />
-        <Route
-          path="/payments"
-          element={
-            <ModulePlaceholder
-              title="Gestion des Paiements"
-              moduleName="Finance · Paiements"
-              description="Enregistrement des règlements (virement, chèque, espèces), affectation aux charges et reçus de paiement."
-            />
-          }
-        />
+        <Route path="/owners" element={<OwnersPage />} />
+        <Route path="/fees" element={<FeesPage />} />
+        <Route path="/payments" element={<PaymentsPage />} />
         <Route
           path="/interventions"
           element={
@@ -106,26 +82,8 @@ export default function AppRoutes() {
             />
           }
         />
-        <Route
-          path="/my-fees"
-          element={
-            <ModulePlaceholder
-              title="Mes Appels de Charges"
-              moduleName="Espace Propriétaire · Mes charges"
-              description="Historique complet des charges émises pour votre appartement, solde dû et téléchargement des avis."
-            />
-          }
-        />
-        <Route
-          path="/my-payments"
-          element={
-            <ModulePlaceholder
-              title="Historique de Mes Règlements"
-              moduleName="Espace Propriétaire · Mes paiements"
-              description="Tous les reçus de paiements enregistrés par le syndic et vos justificatifs fiscaux."
-            />
-          }
-        />
+        <Route path="/my-fees" element={<FeesPage />} />
+        <Route path="/my-payments" element={<PaymentsPage />} />
         <Route
           path="/my-requests"
           element={

@@ -24,6 +24,18 @@ export const userApi = {
     const response = await api.post('/users', data);
     return response.data;
   },
+
+  // Update user
+  update: async (id, data) => {
+    const response = await api.put(`/users/${id}`, data);
+    return response.data;
+  },
+
+  // Delete user
+  delete: async (id) => {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
 };
 
 export default userApi;
