@@ -7,8 +7,8 @@ services:
     container_name: habita-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: pass1234
-      MYSQL_DATABASE: Saas
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3306:3306"
     volumes:

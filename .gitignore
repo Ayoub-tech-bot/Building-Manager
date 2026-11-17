@@ -1,3 +1,8 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
 # IDEs and Editors
 .idea/
 .vscode/
@@ -23,4 +28,3 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
-
