@@ -8,7 +8,7 @@ export default function Navbar({ title, breadcrumb }) {
   const getDefaultBreadcrumb = () => {
     if (breadcrumb) return breadcrumb;
     if (role === ROLES.SYNDIC) return 'Administration / Vue d\'ensemble';
-    if (role === ROLES.OWNER) return 'Espace propriétaire / Vue d\'ensemble';
+    if (role === ROLES.OWNER) return 'Espace propriétaire / Mon appartement';
     return 'Espace personnel / Vue d\'ensemble';
   };
 

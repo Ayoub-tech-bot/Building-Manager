@@ -87,15 +87,15 @@ export default function OwnerModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Modifier le copropriétaire' : 'Nouveau copropriétaire'}
-      subtitle="Renseignez les coordonnées pour l'accès aux charges et documents."
+      title={isEditing ? 'Modifier le propriétaire' : 'Nouveau propriétaire'}
+      subtitle="Renseignez les coordonnées pour créer ou mettre à jour un profil propriétaire dans le système."
       maxWidth="max-w-md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Username / Full Name */}
         <div>
           <label className="block text-xs font-semibold text-[#18201B] mb-1.5">
-            Nom et prénom du copropriétaire *
+            Nom et prénom du propriétaire *
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#7A877B]">
@@ -131,7 +131,7 @@ export default function OwnerModal({
             </div>
             <input
               type="email"
-              placeholder="Ex: karim.amrani@gmail.com"
+              placeholder="karim.amrani@exemple.ma"
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -148,7 +148,7 @@ export default function OwnerModal({
           )}
         </div>
 
-        {/* Phone Number */}
+        {/* Phone */}
         <div>
           <label className="block text-xs font-semibold text-[#18201B] mb-1.5">
             Numéro de téléphone
@@ -159,45 +159,50 @@ export default function OwnerModal({
             </div>
             <input
               type="tel"
-              placeholder="Ex: 06 61 22 33 44"
+              placeholder="06 12 34 56 78"
               value={formData.phoneNumber}
               onChange={(e) =>
                 setFormData({ ...formData, phoneNumber: e.target.value })
               }
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#DDD9C5] bg-white text-[#18201B] focus:border-[#1E392A] focus:outline-none focus:ring-1 focus:ring-[#1E392A]"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#DDD9C5] bg-white text-[#18201B] focus:outline-none focus:border-[#1E392A] focus:ring-1 focus:ring-[#1E392A] transition-all"
             />
           </div>
         </div>
 
-        {/* Password (for creation) */}
-        {!isEditing && (
-          <div>
-            <label className="block text-xs font-semibold text-[#18201B] mb-1.5">
-              Mot de passe initial du compte *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#7A877B]">
-                <Lock size={15} />
-              </div>
-              <input
-                type="password"
-                placeholder="Au moins 6 caractères"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border bg-white text-[#18201B] focus:outline-none focus:ring-1 transition-all ${
-                  errors.password
-                    ? 'border-[#BA372A] focus:border-[#BA372A] focus:ring-[#BA372A]'
-                    : 'border-[#DDD9C5] focus:border-[#1E392A] focus:ring-[#1E392A]'
-                }`}
-              />
+        {/* Password (Only for new owners or optional password reset) */}
+        <div>
+          <label className="block text-xs font-semibold text-[#18201B] mb-1.5">
+            {isEditing
+              ? 'Nouveau mot de passe (laisser vide pour ne pas changer)'
+              : 'Mot de passe temporaire *'}
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#7A877B]">
+              <Lock size={15} />
             </div>
-            {errors.password && (
-              <p className="text-[11px] text-[#BA372A] mt-1">{errors.password}</p>
-            )}
+            <input
+              type="password"
+              placeholder={isEditing ? '••••••••' : 'Minimum 6 caractères'}
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border bg-white text-[#18201B] focus:outline-none focus:ring-1 transition-all ${
+                errors.password
+                  ? 'border-[#BA372A] focus:border-[#BA372A] focus:ring-[#BA372A]'
+                  : 'border-[#DDD9C5] focus:border-[#1E392A] focus:ring-[#1E392A]'
+              }`}
+            />
           </div>
-        )}
+          {errors.password && (
+            <p className="text-[11px] text-[#BA372A] mt-1">{errors.password}</p>
+          )}
+        </div>
+
+        {/* Role Notice */}
+        <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#EAE7D8] text-[11px] text-[#637064]">
+          Ce profil sera créé avec le rôle <strong className="text-[#18201B]">Propriétaire</strong>. Il pourra se connecter à son espace personnel pour consulter ses lots et charges.
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#EAE7D8]">
@@ -218,11 +223,10 @@ export default function OwnerModal({
               ? 'Enregistrement...'
               : isEditing
               ? 'Mettre à jour'
-              : 'Créer le copropriétaire'}
+              : 'Créer le propriétaire'}
           </button>
         </div>
       </form>
     </Modal>
   );
 }
-

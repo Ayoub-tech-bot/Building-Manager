@@ -12,7 +12,9 @@ import {
   CheckCircle,
   Home,
   RefreshCw,
+  UserPlus,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -22,6 +24,8 @@ import OwnerDetailsModal from './OwnerDetailsModal';
 import { userApi } from '../../api/userApi';
 import { ownershipApi } from '../../api/ownershipApi';
 import { useDemoAuth } from '../../context/DemoAuthContext';
+
+const LOCAL_STORAGE_KEY = 'habita_all_owners';
 
 const INITIAL_DEMO_OWNERS = [
   {
@@ -93,13 +97,23 @@ const INITIAL_DEMO_OWNERS = [
 export default function OwnersPage() {
   const { activeResidence } = useDemoAuth();
 
-  const [owners, setOwners] = useState(INITIAL_DEMO_OWNERS);
+  // Load from localStorage or fallback
+  const [owners, setOwners] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return INITIAL_DEMO_OWNERS;
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
-  const [ownershipFilter, setOwnershipFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, ASSIGNED, UNASSIGNED
 
   // Modals state
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
@@ -110,7 +124,16 @@ export default function OwnersPage() {
   const [ownerToDelete, setOwnerToDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Fetch owners from backend, fallback to demo data if offline
+  // Save to localStorage whenever owners change
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(owners));
+    } catch {
+      // ignore
+    }
+  }, [owners]);
+
+  // Fetch owners from backend, fallback to local/demo data if offline
   const fetchOwners = async () => {
     setIsLoading(true);
     try {
@@ -130,7 +153,7 @@ export default function OwnersPage() {
         setOwners(enriched);
       }
     } catch {
-      // Backend offline; keep initial demo data
+      // Backend offline; keep cached local state
     } finally {
       setIsLoading(false);
     }
@@ -152,33 +175,26 @@ export default function OwnersPage() {
       const matchesSearch =
         owner.username.toLowerCase().includes(search) ||
         owner.email.toLowerCase().includes(search) ||
-        (owner.phoneNumber && owner.phoneNumber.includes(search)) ||
-        (owner.ownedApartments &&
-          owner.ownedApartments.some((a) =>
-            a.unitNumber.toLowerCase().includes(search)
-          ));
+        (owner.phoneNumber && owner.phoneNumber.includes(search));
 
-      let matchesFilter = true;
-      if (ownershipFilter === 'WITH_LOTS') {
-        matchesFilter = owner.ownedApartments && owner.ownedApartments.length > 0;
-      } else if (ownershipFilter === 'WITHOUT_LOTS') {
-        matchesFilter = !owner.ownedApartments || owner.ownedApartments.length === 0;
-      } else if (ownershipFilter === 'MULTI') {
-        matchesFilter = owner.ownedApartments && owner.ownedApartments.length > 1;
+      const hasLots = owner.ownedApartments && owner.ownedApartments.length > 0;
+      let matchesStatus = true;
+      if (statusFilter === 'ASSIGNED') {
+        matchesStatus = hasLots;
+      } else if (statusFilter === 'UNASSIGNED') {
+        matchesStatus = !hasLots;
       }
 
-      return matchesSearch && matchesFilter;
+      return matchesSearch && matchesStatus;
     });
-  }, [owners, searchTerm, ownershipFilter]);
+  }, [owners, searchTerm, statusFilter]);
 
   // Statistics
   const totalOwners = owners.length;
-  const withLotsCount = owners.filter(
+  const assignedOwnersCount = owners.filter(
     (o) => o.ownedApartments && o.ownedApartments.length > 0
   ).length;
-  const multiOwnersCount = owners.filter(
-    (o) => o.ownedApartments && o.ownedApartments.length > 1
-  ).length;
+  const unassignedOwnersCount = totalOwners - assignedOwnersCount;
   const verifiedPhones = owners.filter((o) => Boolean(o.phoneNumber)).length;
   const contactRate =
     totalOwners > 0 ? Math.round((verifiedPhones / totalOwners) * 100) : 0;
@@ -213,9 +229,13 @@ export default function OwnersPage() {
         } catch {
           // Local fallback
         }
-        setOwners((prev) =>
-          prev.map((o) => (o.id === ownerToEdit.id ? { ...o, ...formData } : o))
-        );
+        setOwners((prev) => {
+          const updated = prev.map((o) =>
+            o.id === ownerToEdit.id ? { ...o, ...formData } : o
+          );
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
         triggerNotification(`Le compte de ${formData.username} a été mis à jour.`);
       } else {
         let newOwner = {
@@ -231,8 +251,12 @@ export default function OwnersPage() {
         } catch {
           // Local fallback
         }
-        setOwners((prev) => [newOwner, ...prev]);
-        triggerNotification(`Le copropriétaire ${formData.username} a été créé.`);
+        setOwners((prev) => {
+          const updated = [newOwner, ...prev];
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
+        triggerNotification(`Le profil propriétaire de ${formData.username} a été créé.`);
       }
       setIsOwnerModalOpen(false);
     } finally {
@@ -249,8 +273,12 @@ export default function OwnersPage() {
       } catch {
         // Local fallback
       }
-      setOwners((prev) => prev.filter((o) => o.id !== ownerToDelete.id));
-      triggerNotification(`Le compte de ${ownerToDelete.username} a été supprimé.`);
+      setOwners((prev) => {
+        const updated = prev.filter((o) => o.id !== ownerToDelete.id);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      triggerNotification(`Le propriétaire ${ownerToDelete.username} a été supprimé.`);
       setIsDeleteModalOpen(false);
     } finally {
       setActionLoading(false);
@@ -271,10 +299,10 @@ export default function OwnersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#18201B]">
-            Répertoire des Copropriétaires
+            Annuaire des Propriétaires
           </h1>
           <p className="text-sm text-[#5B675C] mt-1">
-            Annuaire des résidents et bailleurs de la {activeResidence.name}, coordonnées et tantièmes.
+            Gestion globale des profils propriétaires. Créez et gérez les comptes utilisateurs avant leur attribution à des lots.
           </p>
         </div>
 
@@ -283,7 +311,7 @@ export default function OwnersPage() {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E392A] text-white text-xs font-semibold hover:bg-[#162C20] transition-all shadow-subtle shrink-0"
         >
           <Plus size={16} />
-          <span>Nouveau copropriétaire</span>
+          <span>Nouveau propriétaire</span>
         </button>
       </div>
 
@@ -291,32 +319,32 @@ export default function OwnersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           variant="primary"
-          title="Total copropriétaires"
+          title="Total propriétaires"
           value={totalOwners.toString()}
-          subtitle="Comptes enregistrés dans la résidence"
+          subtitle="Comptes enregistrés sur la plateforme"
           icon={Users}
         />
         <StatCard
-          title="Propriétaires avec lots"
-          value={withLotsCount.toString()}
-          subtitle={`${Math.round((withLotsCount / (totalOwners || 1)) * 100)} % des comptes inscrits`}
-          icon={Home}
+          title="Attribués à des lots"
+          value={assignedOwnersCount.toString()}
+          subtitle="Possèdent au moins 1 appartement"
+          icon={UserCheck}
         />
         <StatCard
-          title="Multi-propriétaires"
-          value={multiOwnersCount.toString()}
-          subtitle="Possèdent 2 lots ou plus"
-          icon={Building}
+          title="Sans lot (en attente)"
+          value={unassignedOwnersCount.toString()}
+          subtitle="Profils disponibles pour assignation"
+          icon={UserPlus}
         />
         <StatCard
-          title="Coordonnées renseignées"
+          title="Coordonnées vérifiées"
           value={`${contactRate} %`}
-          subtitle="Emails et téléphones valides"
+          subtitle="Avec numéro de téléphone renseigné"
           icon={ShieldCheck}
         />
       </div>
 
-      {/* Search and Filters Bar */}
+      {/* Search and Filter Bar */}
       <div className="bg-white border border-[#E2DFC9] rounded-2xl p-4 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
@@ -325,7 +353,7 @@ export default function OwnersPage() {
           </div>
           <input
             type="text"
-            placeholder="Rechercher par nom, email, téléphone ou numéro de lot..."
+            placeholder="Rechercher par nom, email ou téléphone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#DDD9C5] bg-[#FAF9F5] text-[#18201B] placeholder-[#8C988D] focus:bg-white focus:border-[#1E392A] focus:outline-none focus:ring-1 focus:ring-[#1E392A] transition-all"
@@ -335,22 +363,21 @@ export default function OwnersPage() {
         {/* Filter Dropdown */}
         <div className="flex items-center gap-2.5 text-xs">
           <div className="flex items-center gap-1.5 bg-[#FAF9F5] border border-[#DDD9C5] px-3 py-1.5 rounded-xl">
-            <span className="text-[#6E7B70] font-medium">Filtre :</span>
+            <span className="text-[#6E7B70] font-medium">Statut :</span>
             <select
-              value={ownershipFilter}
-              onChange={(e) => setOwnershipFilter(e.target.value)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-transparent text-[#18201B] font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tous les copropriétaires</option>
-              <option value="WITH_LOTS">Avec appartements assignés</option>
-              <option value="WITHOUT_LOTS">Sans lot rattaché</option>
-              <option value="MULTI">Multi-propriétaires (≥ 2 lots)</option>
+              <option value="ALL">Tous les propriétaires ({totalOwners})</option>
+              <option value="ASSIGNED">Attribués à un lot ({assignedOwnersCount})</option>
+              <option value="UNASSIGNED">Sans lot attribué ({unassignedOwnersCount})</option>
             </select>
           </div>
 
           <button
             onClick={fetchOwners}
-            title="Rafraîchir"
+            title="Rafraîchir depuis le serveur"
             className="p-2 rounded-xl border border-[#DDD9C5] bg-white hover:bg-[#F2EFE4] text-[#6E7B70] hover:text-[#18201B] transition-colors"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
@@ -364,10 +391,10 @@ export default function OwnersPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#EAE7D8] bg-[#FAF9F5] text-[#7F8B80] font-semibold uppercase text-[10px] tracking-wider">
-                <th className="py-3.5 px-6">Copropriétaire</th>
+                <th className="py-3.5 px-6">Propriétaire</th>
                 <th className="py-3.5 px-4">Coordonnées</th>
+                <th className="py-3.5 px-4">Statut d'attribution</th>
                 <th className="py-3.5 px-4">Lots associés</th>
-                <th className="py-3.5 px-4">Surface totale</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
               </tr>
             </thead>
@@ -378,32 +405,18 @@ export default function OwnersPage() {
                     <div className="max-w-xs mx-auto space-y-2">
                       <Users size={28} className="mx-auto text-[#B5AE9B]" />
                       <p className="font-semibold text-sm text-[#18201B]">
-                        Aucun copropriétaire trouvé
+                        Aucun propriétaire trouvé
                       </p>
                       <p className="text-xs text-[#7F8B80]">
-                        Aucun résultat ne correspond à votre recherche.
+                        Aucun profil ne correspond aux critères de recherche actuels.
                       </p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredOwners.map((owner) => {
-                  const initials = owner.username
-                    ? owner.username
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)
-                    : 'PR';
-
-                  const ownedCount = owner.ownedApartments ? owner.ownedApartments.length : 0;
-                  const totalArea = owner.ownedApartments
-                    ? owner.ownedApartments.reduce(
-                        (sum, a) => sum + (Number(a.sizeM2) || 0),
-                        0
-                      )
-                    : 0;
+                  const hasLots =
+                    owner.ownedApartments && owner.ownedApartments.length > 0;
 
                   return (
                     <tr
@@ -413,15 +426,17 @@ export default function OwnersPage() {
                       {/* Name & Avatar */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#1E392A] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                            {initials}
+                          <div className="w-8 h-8 rounded-full bg-[#1E392A] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-subtle">
+                            {owner.username
+                              ? owner.username.substring(0, 2).toUpperCase()
+                              : 'PR'}
                           </div>
                           <div>
                             <div className="font-semibold text-sm text-[#18201B]">
                               {owner.username}
                             </div>
-                            <div className="text-[11px] text-[#707D72]">
-                              Copropriétaire inscrit
+                            <div className="text-[11px] text-[#717E73]">
+                              Rôle : Propriétaire
                             </div>
                           </div>
                         </div>
@@ -429,63 +444,62 @@ export default function OwnersPage() {
 
                       {/* Contact Info */}
                       <td className="py-4 px-4 space-y-1">
-                        <a
-                          href={`mailto:${owner.email}`}
-                          className="flex items-center gap-1.5 text-[#18201B] hover:text-[#1E392A] hover:underline"
-                        >
+                        <div className="flex items-center gap-1.5 text-xs text-[#18201B]">
                           <Mail size={13} className="text-[#7F8B80]" />
                           <span>{owner.email}</span>
-                        </a>
-                        {owner.phoneNumber && (
-                          <a
-                            href={`tel:${owner.phoneNumber}`}
-                            className="flex items-center gap-1.5 text-[#637064] hover:text-[#18201B]"
-                          >
-                            <Phone size={13} className="text-[#7F8B80]" />
+                        </div>
+                        {owner.phoneNumber ? (
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#69766B]">
+                            <Phone size={12} className="text-[#7F8B80]" />
                             <span>{owner.phoneNumber}</span>
-                          </a>
-                        )}
-                      </td>
-
-                      {/* Owned Lots */}
-                      <td className="py-4 px-4">
-                        {ownedCount > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {owner.ownedApartments.map((a) => (
-                              <span
-                                key={a.id}
-                                className="px-2 py-0.5 rounded border border-[#DDD9C5] bg-[#F7F6F1] font-bold text-[11px] text-[#18201B]"
-                              >
-                                {a.unitNumber}
-                              </span>
-                            ))}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-[#8C988D] italic">
-                            Aucun lot
+                          <span className="text-[11px] text-[#A69F8E] italic">
+                            Téléphone non renseigné
                           </span>
                         )}
                       </td>
 
-                      {/* Total Area */}
-                      <td className="py-4 px-4 font-semibold text-[#18201B]">
-                        {totalArea > 0 ? `${totalArea} m²` : '—'}
+                      {/* Status */}
+                      <td className="py-4 px-4">
+                        {hasLots ? (
+                          <StatusBadge status="paid" label="Attribué à un lot" />
+                        ) : (
+                          <StatusBadge status="pending" label="Sans lot (en attente)" />
+                        )}
+                      </td>
+
+                      {/* Lots */}
+                      <td className="py-4 px-4">
+                        {hasLots ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {owner.ownedApartments.map((apt) => (
+                              <span
+                                key={apt.id}
+                                className="px-2 py-0.5 rounded-md border border-[#DDD9C5] bg-[#FAF9F5] text-[11px] font-semibold text-[#18201B]"
+                              >
+                                {apt.unitNumber} ({apt.sizeM2} m²)
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[#8A958B] italic">
+                            Aucun lot pour le moment
+                          </span>
+                        )}
                       </td>
 
                       {/* Actions */}
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* View Fiche */}
                           <button
                             onClick={() => handleOpenDetailsModal(owner)}
-                            title="Voir la fiche complète"
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#DDD9C5] bg-white text-[#18201B] hover:bg-[#F2EFE4] text-xs font-semibold transition-colors shadow-subtle"
+                            title="Voir la fiche détaillée"
+                            className="p-1.5 rounded-lg text-[#667368] hover:text-[#18201B] hover:bg-[#F2EFE4] transition-colors"
                           >
-                            <Eye size={13} className="text-[#627063]" />
-                            <span className="hidden sm:inline">Fiche</span>
+                            <Eye size={15} />
                           </button>
 
-                          {/* Edit */}
                           <button
                             onClick={() => handleOpenEditModal(owner)}
                             title="Modifier les coordonnées"
@@ -494,10 +508,9 @@ export default function OwnersPage() {
                             <Edit2 size={15} />
                           </button>
 
-                          {/* Delete */}
                           <button
                             onClick={() => handleOpenDeleteModal(owner)}
-                            title="Supprimer le copropriétaire"
+                            title="Supprimer le propriétaire"
                             className="p-1.5 rounded-lg text-[#8A958B] hover:text-[#BA372A] hover:bg-[#FBEBE8] transition-colors"
                           >
                             <Trash2 size={15} />
@@ -515,15 +528,15 @@ export default function OwnersPage() {
         {/* Footer */}
         <div className="px-6 py-4 bg-[#FAF9F5] border-t border-[#EAE7D8] flex items-center justify-between text-xs text-[#717E73]">
           <span>
-            Affichage de {filteredOwners.length} sur {totalOwners} copropriétaires
+            Affichage de {filteredOwners.length} sur {totalOwners} propriétaires
           </span>
           <span className="font-semibold text-[#18201B]">
-            {withLotsCount} propriétaires actifs
+            {assignedOwnersCount} copropriétaires actifs dans la résidence
           </span>
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Modals */}
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={() => setIsOwnerModalOpen(false)}
@@ -532,25 +545,21 @@ export default function OwnersPage() {
         isLoading={actionLoading}
       />
 
-      {/* Details Modal */}
       <OwnerDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         owner={selectedOwnerForDetails}
-        apartments={selectedOwnerForDetails?.ownedApartments || []}
       />
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteOwner}
-        title={`Supprimer le compte de ${ownerToDelete?.username}`}
-        message={`Êtes-vous certain de vouloir supprimer le compte copropriétaire de ${ownerToDelete?.username} (${ownerToDelete?.email}) ? Cette action n'annule pas les actes notariés passés.`}
+        title={`Supprimer le propriétaire ${ownerToDelete?.username}`}
+        message={`Êtes-vous certain de vouloir supprimer le compte de ${ownerToDelete?.username} ? S'il possède des lots, ses attributions devront être réassignées.`}
         confirmText="Supprimer définitivement"
         isLoading={actionLoading}
       />
     </div>
   );
 }
-

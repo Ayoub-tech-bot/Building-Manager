@@ -20,7 +20,9 @@ public class ApartmentMapper {
     public Apartment toEntity(ApartmentDto dto) {
         if (dto == null) return null;
         Apartment apt = new Apartment();
-        apt.setId(dto.getId());
+        if (dto.getId() > 0) {
+            apt.setId(dto.getId());
+        }
         apt.setUnitNumber(dto.getUnitNumber());
         apt.setSizeM2(dto.getSizeM2());
         apt.setFloor(dto.getFloor());

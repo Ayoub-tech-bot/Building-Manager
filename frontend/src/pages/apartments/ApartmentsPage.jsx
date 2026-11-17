@@ -151,14 +151,35 @@ const DEMO_OWNERS_LIST = [
   { id: 'owner-8', username: 'Hassan Kabbaj', email: 'hassan.kabbaj@gmail.com' },
 ];
 
+const LOCAL_STORAGE_KEY = 'habita_apartments';
+
 export default function ApartmentsPage() {
   const { activeResidence } = useDemoAuth();
 
-  const [apartments, setApartments] = useState(INITIAL_DEMO_APARTMENTS);
+  // Load from localStorage or fallback
+  const [apartments, setApartments] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return INITIAL_DEMO_APARTMENTS;
+  });
+
   const [buildings, setBuildings] = useState(DEFAULT_BUILDINGS);
   const [ownersList, setOwnersList] = useState(DEMO_OWNERS_LIST);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
+
+  // Sync to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(apartments));
+    } catch {
+      // ignore
+    }
+  }, [apartments]);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -192,9 +213,10 @@ export default function ApartmentsPage() {
           })
         );
         setApartments(enriched);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(enriched));
       }
     } catch {
-      // Backend not running or no data; keep INITIAL_DEMO_APARTMENTS
+      // Backend not running or no data; keep cached local state in apartments
     } finally {
       setIsLoading(false);
     }
@@ -306,25 +328,37 @@ export default function ApartmentsPage() {
         // Try backend update
         try {
           await apartmentApi.update(apartmentToEdit.id, formData);
-        } catch {
-          // If backend offline, update local state
+        } catch (err) {
+          console.warn('Backend update failed or offline, saving locally:', err);
         }
-        setApartments((prev) =>
-          prev.map((a) =>
+        setApartments((prev) => {
+          const updated = prev.map((a) =>
             a.id === apartmentToEdit.id ? { ...a, ...formData } : a
-          )
-        );
+          );
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
         triggerNotification(`L'appartement ${formData.unitNumber} a été mis à jour.`);
       } else {
         // Try backend create
-        let newApt = { ...formData, id: Date.now(), currentOwner: null };
+        let newApt = {
+          ...formData,
+          id: Date.now(),
+          currentOwner: null,
+        };
         try {
           const created = await apartmentApi.create(formData);
-          if (created && created.id) newApt = { ...created, currentOwner: null };
-        } catch {
-          // If backend offline, use local id
+          if (created && created.id) {
+            newApt = { ...created, currentOwner: null };
+          }
+        } catch (err) {
+          console.warn('Backend create failed or offline, saving locally:', err);
         }
-        setApartments((prev) => [newApt, ...prev]);
+        setApartments((prev) => {
+          const updated = [newApt, ...prev];
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
         triggerNotification(`L'appartement ${formData.unitNumber} a été créé avec succès.`);
       }
       setIsApartmentModalOpen(false);
@@ -345,15 +379,17 @@ export default function ApartmentsPage() {
         } else {
           await ownershipApi.assign({ ownerId, apartmentId });
         }
-      } catch {
-        // If backend offline, proceed with local update
+      } catch (err) {
+        console.warn('Backend ownership assign failed or offline, saving locally:', err);
       }
 
-      setApartments((prev) =>
-        prev.map((a) =>
+      setApartments((prev) => {
+        const updated = prev.map((a) =>
           a.id === apartmentId ? { ...a, currentOwner: selectedOwner } : a
-        )
-      );
+        );
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
 
       triggerNotification(
         isTransfer
@@ -372,10 +408,14 @@ export default function ApartmentsPage() {
     try {
       try {
         await apartmentApi.delete(apartmentToDelete.id);
-      } catch {
-        // Backend offline fallback
+      } catch (err) {
+        console.warn('Backend delete failed or offline, saving locally:', err);
       }
-      setApartments((prev) => prev.filter((a) => a.id !== apartmentToDelete.id));
+      setApartments((prev) => {
+        const updated = prev.filter((a) => a.id !== apartmentToDelete.id);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
       triggerNotification(`L'appartement ${apartmentToDelete.unitNumber} a été supprimé.`);
       setIsDeleteModalOpen(false);
     } finally {

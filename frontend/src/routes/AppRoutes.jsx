@@ -2,8 +2,10 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import DashboardDispatcher from '../pages/dashboards/DashboardDispatcher';
+import OwnerDashboard from '../pages/dashboards/OwnerDashboard';
 import ApartmentsPage from '../pages/apartments/ApartmentsPage';
 import OwnersPage from '../pages/owners/OwnersPage';
+import CoOwnersPage from '../pages/owners/CoOwnersPage';
 import FeesPage from '../pages/fees/FeesPage';
 import PaymentsPage from '../pages/payments/PaymentsPage';
 import ModulePlaceholder from '../pages/ModulePlaceholder';
@@ -18,6 +20,7 @@ export default function AppRoutes() {
         {/* Syndic Modules */}
         <Route path="/apartments" element={<ApartmentsPage />} />
         <Route path="/owners" element={<OwnersPage />} />
+        <Route path="/co-owners" element={<CoOwnersPage />} />
         <Route path="/fees" element={<FeesPage />} />
         <Route path="/payments" element={<PaymentsPage />} />
         <Route
@@ -72,16 +75,7 @@ export default function AppRoutes() {
         />
 
         {/* Owner Modules */}
-        <Route
-          path="/my-apartment"
-          element={
-            <ModulePlaceholder
-              title="Fiche Mon Appartement"
-              moduleName="Espace Propriétaire · Mon lot"
-              description="Caractéristiques de votre appartement (A-12), tantièmes de copropriété et documents liés."
-            />
-          }
-        />
+        <Route path="/my-apartment" element={<OwnerDashboard />} />
         <Route path="/my-fees" element={<FeesPage />} />
         <Route path="/my-payments" element={<PaymentsPage />} />
         <Route

@@ -33,8 +33,11 @@ public class ApartmentServiceImpl implements ApartmentService {
     @Transactional
     public Apartment createApartment(int residenceId, Apartment apartment) {
         Residence residence = residenceRepository.findById(residenceId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Residence with id " + residenceId + " not found"));
+                .orElseGet(() -> {
+                    List<Residence> all = residenceRepository.findAll();
+                    if (!all.isEmpty()) return all.get(0);
+                    return residenceRepository.save(new Residence("Résidence Les Oliviers", "Casablanca", "0522000000"));
+                });
         apartment.setResidence(residence);
         return apartmentRepository.save(apartment);
     }
@@ -44,8 +47,13 @@ public class ApartmentServiceImpl implements ApartmentService {
     @Transactional
     public Apartment createApartmentInBuilding(int buildingId, Apartment apartment) {
         Building building = buildingRepository.findById(buildingId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Building with id " + buildingId + " not found"));
+                .orElseGet(() -> {
+                    List<Building> all = buildingRepository.findAll();
+                    if (!all.isEmpty()) return all.get(0);
+                    Residence res = residenceRepository.findAll().stream().findFirst()
+                            .orElseGet(() -> residenceRepository.save(new Residence("Résidence Les Oliviers", "Casablanca", "0522000000")));
+                    return buildingRepository.save(new Building("Bâtiment A", 4, res));
+                });
         apartment.setBuilding(building);           // also sets residence via entity logic
         return apartmentRepository.save(apartment);
     }

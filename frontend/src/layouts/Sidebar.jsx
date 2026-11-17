@@ -33,6 +33,7 @@ export default function Sidebar() {
           { name: "Vue d'ensemble", path: '/', icon: LayoutGrid },
           { name: 'Appartements', path: '/apartments', icon: Building },
           { name: 'Propriétaires', path: '/owners', icon: Users },
+          { name: 'Copropriétaires', path: '/co-owners', icon: UserCheck },
           { name: 'Charges', path: '/fees', icon: Receipt },
           { name: 'Paiements', path: '/payments', icon: CreditCard },
           { name: 'Interventions', path: '/interventions', icon: Wrench, badge: 8 },
@@ -48,7 +49,6 @@ export default function Sidebar() {
       return {
         title: 'MON ESPACE',
         items: [
-          { name: "Vue d'ensemble", path: '/', icon: LayoutGrid },
           { name: 'Mon appartement', path: '/my-apartment', icon: Home },
           { name: 'Mes charges', path: '/my-fees', icon: Receipt },
           { name: 'Mes paiements', path: '/my-payments', icon: CreditCard },
