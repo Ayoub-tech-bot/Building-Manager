@@ -33,10 +33,23 @@ export default function ApartmentModal({
   // Load buildings for this residence
   useEffect(() => {
     let isMounted = true;
+    try {
+      const saved = localStorage.getItem('habita_buildings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBuildings(parsed);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     buildingApi.getByResidence(activeResidenceId)
       .then((data) => {
         if (isMounted && Array.isArray(data) && data.length > 0) {
           setBuildings(data);
+          localStorage.setItem('habita_buildings', JSON.stringify(data));
         }
       })
       .catch(() => {

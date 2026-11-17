@@ -14,6 +14,8 @@ public class BuildingDto {
 
     @NotNull(message = "Residence ID is required")
     private int residenceId;
+    private Integer apartmentsCount;
+    private Double totalAreaM2;
 
     public BuildingDto() {}
 
@@ -54,6 +56,22 @@ public class BuildingDto {
 
     public void setResidenceId(int residenceId) {
         this.residenceId = residenceId;
+    }
+
+    public Integer getApartmentsCount() {
+        return apartmentsCount;
+    }
+
+    public void setApartmentsCount(Integer apartmentsCount) {
+        this.apartmentsCount = apartmentsCount;
+    }
+
+    public Double getTotalAreaM2() {
+        return totalAreaM2;
+    }
+
+    public void setTotalAreaM2(Double totalAreaM2) {
+        this.totalAreaM2 = totalAreaM2;
     }
 }
 

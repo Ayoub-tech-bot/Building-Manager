@@ -4,6 +4,7 @@ import { useDemoAuth, ROLES } from '../context/DemoAuthContext';
 import {
   LayoutGrid,
   Building,
+  Building2,
   Users,
   Receipt,
   CreditCard,
@@ -31,7 +32,8 @@ export default function Sidebar() {
         title: 'GESTION DE LA RÉSIDENCE',
         items: [
           { name: "Vue d'ensemble", path: '/', icon: LayoutGrid },
-          { name: 'Appartements', path: '/apartments', icon: Building },
+          { name: 'Immeubles', path: '/buildings', icon: Building2 },
+          { name: 'Appartements', path: '/apartments', icon: Home },
           { name: 'Propriétaires', path: '/owners', icon: Users },
           { name: 'Copropriétaires', path: '/co-owners', icon: UserCheck },
           { name: 'Charges', path: '/fees', icon: Receipt },

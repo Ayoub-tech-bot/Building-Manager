@@ -16,7 +16,11 @@ public class BuildingMapper {
             return null;
         }
         Building building = new Building();
-        BeanUtils.copyProperties(dto, building);
+        building.setName(dto.getName());
+        building.setFloorsCount(dto.getFloorsCount());
+        if (dto.getId() > 0) {
+            building.setId(dto.getId());
+        }
         return building;
     }
 

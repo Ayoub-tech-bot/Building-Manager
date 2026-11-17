@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import DashboardDispatcher from '../pages/dashboards/DashboardDispatcher';
 import OwnerDashboard from '../pages/dashboards/OwnerDashboard';
 import ApartmentsPage from '../pages/apartments/ApartmentsPage';
+import BuildingsPage from '../pages/buildings/BuildingsPage';
 import OwnersPage from '../pages/owners/OwnersPage';
 import CoOwnersPage from '../pages/owners/CoOwnersPage';
 import FeesPage from '../pages/fees/FeesPage';
@@ -18,6 +19,7 @@ export default function AppRoutes() {
         <Route path="/" element={<DashboardDispatcher />} />
 
         {/* Syndic Modules */}
+        <Route path="/buildings" element={<BuildingsPage />} />
         <Route path="/apartments" element={<ApartmentsPage />} />
         <Route path="/owners" element={<OwnersPage />} />
         <Route path="/co-owners" element={<CoOwnersPage />} />
