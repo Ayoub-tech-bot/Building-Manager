@@ -19,6 +19,12 @@ export const apartmentApi = {
     return response.data;
   },
 
+  // Fetch apartments for a specific building
+  getByBuilding: async (buildingId) => {
+    const response = await api.get(`/apartments/building/${buildingId}`);
+    return response.data;
+  },
+
   // Create a new apartment
   // Payload: { unitNumber: string, sizeM2: number, residenceId: number }
   create: async (data) => {

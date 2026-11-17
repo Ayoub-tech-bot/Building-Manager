@@ -23,6 +23,7 @@ import AssignOwnerModal from './AssignOwnerModal';
 import { apartmentApi } from '../../api/apartmentApi';
 import { ownershipApi } from '../../api/ownershipApi';
 import { userApi } from '../../api/userApi';
+import buildingApi from '../../api/buildingApi';
 import { useDemoAuth } from '../../context/DemoAuthContext';
 
 // Baseline demo apartments for fallback & initial preview matching Figma
@@ -32,8 +33,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'A-12',
     sizeM2: 86.0,
     residenceId: 1,
-    building: 'Bâtiment A',
-    floor: '2e étage',
+    buildingId: 1,
+    buildingName: 'Bâtiment A',
+    floor: 2,
     currentOwner: {
       id: 'owner-1',
       username: 'Karim El Amrani',
@@ -45,8 +47,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'B-04',
     sizeM2: 92.5,
     residenceId: 1,
-    building: 'Bâtiment B',
-    floor: 'RDC',
+    buildingId: 2,
+    buildingName: 'Bâtiment B',
+    floor: 0,
     currentOwner: {
       id: 'owner-2',
       username: 'Youssef Tazi',
@@ -58,8 +61,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'C-08',
     sizeM2: 74.0,
     residenceId: 1,
-    building: 'Bâtiment C',
-    floor: '1er étage',
+    buildingId: 3,
+    buildingName: 'Bâtiment C',
+    floor: 1,
     currentOwner: {
       id: 'owner-3',
       username: 'Salma Idrissi',
@@ -71,8 +75,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'A-03',
     sizeM2: 86.0,
     residenceId: 1,
-    building: 'Bâtiment A',
-    floor: 'RDC',
+    buildingId: 1,
+    buildingName: 'Bâtiment A',
+    floor: 0,
     currentOwner: {
       id: 'owner-4',
       username: 'Omar Berrada',
@@ -84,8 +89,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'B-07',
     sizeM2: 110.0,
     residenceId: 1,
-    building: 'Bâtiment B',
-    floor: '2e étage',
+    buildingId: 2,
+    buildingName: 'Bâtiment B',
+    floor: 2,
     currentOwner: {
       id: 'owner-5',
       username: 'Mehdi Amrani',
@@ -97,8 +103,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'C-02',
     sizeM2: 68.0,
     residenceId: 1,
-    building: 'Bâtiment C',
-    floor: 'RDC',
+    buildingId: 3,
+    buildingName: 'Bâtiment C',
+    floor: 0,
     currentOwner: {
       id: 'owner-6',
       username: 'Amina Chraïbi',
@@ -110,8 +117,9 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'A-15',
     sizeM2: 95.0,
     residenceId: 1,
-    building: 'Bâtiment A',
-    floor: '3e étage',
+    buildingId: 1,
+    buildingName: 'Bâtiment A',
+    floor: 3,
     currentOwner: null, // Vacant
   },
   {
@@ -119,10 +127,17 @@ const INITIAL_DEMO_APARTMENTS = [
     unitNumber: 'B-11',
     sizeM2: 80.0,
     residenceId: 1,
-    building: 'Bâtiment B',
-    floor: '3e étage',
+    buildingId: 2,
+    buildingName: 'Bâtiment B',
+    floor: 3,
     currentOwner: null, // Vacant
   },
+];
+
+const DEFAULT_BUILDINGS = [
+  { id: 1, name: 'Bâtiment A' },
+  { id: 2, name: 'Bâtiment B' },
+  { id: 3, name: 'Bâtiment C' },
 ];
 
 const DEMO_OWNERS_LIST = [
@@ -140,6 +155,7 @@ export default function ApartmentsPage() {
   const { activeResidence } = useDemoAuth();
 
   const [apartments, setApartments] = useState(INITIAL_DEMO_APARTMENTS);
+  const [buildings, setBuildings] = useState(DEFAULT_BUILDINGS);
   const [ownersList, setOwnersList] = useState(DEMO_OWNERS_LIST);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -184,6 +200,17 @@ export default function ApartmentsPage() {
     }
   };
 
+  const fetchBuildings = async () => {
+    try {
+      const data = await buildingApi.getByResidence(activeResidence.id);
+      if (Array.isArray(data) && data.length > 0) {
+        setBuildings(data);
+      }
+    } catch {
+      // Keep DEFAULT_BUILDINGS
+    }
+  };
+
   const fetchOwners = async () => {
     try {
       const owners = await userApi.getByRole('Owner');
@@ -197,8 +224,9 @@ export default function ApartmentsPage() {
 
   useEffect(() => {
     fetchApartments();
+    fetchBuildings();
     fetchOwners();
-  }, []);
+  }, [activeResidence.id]);
 
   // Show auto-dismiss notification
   const triggerNotification = (message, type = 'success') => {
@@ -217,10 +245,18 @@ export default function ApartmentsPage() {
         (apt.currentOwner &&
           apt.currentOwner.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      // Building filter (based on first letter or building tag)
+      // Building filter
       let matchesBuilding = true;
       if (buildingFilter !== 'ALL') {
-        matchesBuilding = apt.unitNumber.startsWith(buildingFilter);
+        const filterVal = String(buildingFilter);
+        const aptBuildingId = apt.buildingId ? String(apt.buildingId) : null;
+        const aptBuildingName = apt.buildingName || apt.building || '';
+
+        matchesBuilding =
+          aptBuildingId === filterVal ||
+          aptBuildingName === filterVal ||
+          aptBuildingName.includes(filterVal) ||
+          apt.unitNumber.startsWith(filterVal);
       }
 
       // Status filter
@@ -347,6 +383,14 @@ export default function ApartmentsPage() {
     }
   };
 
+  const formatFloor = (floor) => {
+    if (floor === null || floor === undefined || floor === '') return null;
+    const num = Number(floor);
+    if (num === 0) return 'RDC';
+    if (num === 1) return '1er étage';
+    return `${num}e étage`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -364,7 +408,7 @@ export default function ApartmentsPage() {
             Appartements & Lots
           </h1>
           <p className="text-sm text-[#5B675C] mt-1">
-            Inventaire des {totalApartments} lots de la {activeResidence.name}, surfaces privatives et copropriétaires.
+            Inventaire des {totalApartments} lots de la {activeResidence.name}, classés par bâtiment et étage.
           </p>
         </div>
 
@@ -432,10 +476,12 @@ export default function ApartmentsPage() {
               onChange={(e) => setBuildingFilter(e.target.value)}
               className="bg-transparent text-[#18201B] font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tous</option>
-              <option value="A">Bâtiment A</option>
-              <option value="B">Bâtiment B</option>
-              <option value="C">Bâtiment C</option>
+              <option value="ALL">Tous les bâtiments</option>
+              {buildings.map((b) => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -470,7 +516,8 @@ export default function ApartmentsPage() {
             <thead>
               <tr className="border-b border-[#EAE7D8] bg-[#FAF9F5] text-[#7F8B80] font-semibold uppercase text-[10px] tracking-wider">
                 <th className="py-3.5 px-6">Lot / Appartement</th>
-                <th className="py-3.5 px-4">Surface privative</th>
+                <th className="py-3.5 px-4">Bâtiment & Étage</th>
+                <th className="py-3.5 px-4">Surface</th>
                 <th className="py-3.5 px-4">Propriétaire actuel</th>
                 <th className="py-3.5 px-4">Statut</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
@@ -479,7 +526,7 @@ export default function ApartmentsPage() {
             <tbody className="divide-y divide-[#F1EFE3]">
               {filteredApartments.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-[#7F8B80]">
+                  <td colSpan="6" className="py-12 text-center text-[#7F8B80]">
                     <div className="max-w-xs mx-auto space-y-2">
                       <Home size={28} className="mx-auto text-[#B5AE9B]" />
                       <p className="font-semibold text-sm text-[#18201B]">
@@ -494,12 +541,15 @@ export default function ApartmentsPage() {
               ) : (
                 filteredApartments.map((apt) => {
                   const isOccupied = Boolean(apt.currentOwner);
+                  const buildingDisplayName = apt.buildingName || apt.building || 'Bâtiment non assigné';
+                  const floorLabel = formatFloor(apt.floor);
+
                   return (
                     <tr
                       key={apt.id}
                       className="hover:bg-[#FAF9F5] transition-colors"
                     >
-                      {/* Unit Number & Building */}
+                      {/* Unit Number */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <span className="px-2.5 py-1 rounded-lg border border-[#DDD9C5] bg-[#F7F6F1] font-bold text-xs text-[#18201B] shadow-subtle">
@@ -513,6 +563,16 @@ export default function ApartmentsPage() {
                               {activeResidence.name}
                             </div>
                           </div>
+                        </div>
+                      </td>
+
+                      {/* Building and Floor */}
+                      <td className="py-4 px-4">
+                        <div className="font-medium text-[#18201B]">
+                          {buildingDisplayName}
+                        </div>
+                        <div className="text-[11px] text-[#7F8B80]">
+                          {floorLabel ? floorLabel : 'Étage non spécifié'}
                         </div>
                       </td>
 
@@ -585,7 +645,7 @@ export default function ApartmentsPage() {
                           {/* Edit */}
                           <button
                             onClick={() => handleOpenEditModal(apt)}
-                            title="Modifier les dimensions"
+                            title="Modifier le lot"
                             className="p-1.5 rounded-lg text-[#667368] hover:text-[#18201B] hover:bg-[#F2EFE4] transition-colors"
                           >
                             <Edit2 size={15} />
@@ -654,4 +714,3 @@ export default function ApartmentsPage() {
     </div>
   );
 }
-

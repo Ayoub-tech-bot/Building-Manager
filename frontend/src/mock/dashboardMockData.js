@@ -118,6 +118,9 @@ export const OWNER_DASHBOARD_DATA = {
   apartment: {
     unit: 'Appartement A-12',
     residence: 'Résidence Les Oliviers',
+    buildingName: 'Bâtiment A',
+    floor: 2,
+    sizeM2: 86,
     details: 'Bâtiment A · 2e étage · 86 m²',
     sinceDate: '1er août 2026',
     imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=700&q=80',

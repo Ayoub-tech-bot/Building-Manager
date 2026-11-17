@@ -69,7 +69,15 @@ export default function OwnerDashboard() {
                 {data.apartment.unit}
               </h2>
               <p className="text-xs text-[#5D6A5E] mt-1">
-                {data.apartment.details}
+                {data.apartment.buildingName
+                  ? `${data.apartment.buildingName} · ${
+                      data.apartment.floor !== undefined && data.apartment.floor !== null
+                        ? data.apartment.floor === 0
+                          ? 'RDC'
+                          : `${data.apartment.floor}e étage`
+                        : ''
+                    } · ${data.apartment.sizeM2} m²`
+                  : data.apartment.details}
               </p>
             </div>
 
