@@ -49,3 +49,4 @@ Building-Manager/
   npm run dev
   ```
 - Local URL: `http://localhost:5173`
+
