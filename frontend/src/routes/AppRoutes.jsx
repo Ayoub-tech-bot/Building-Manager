@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import DashboardDispatcher from '../pages/dashboards/DashboardDispatcher';
+import ApartmentsPage from '../pages/apartments/ApartmentsPage';
 import ModulePlaceholder from '../pages/ModulePlaceholder';
 
 export default function AppRoutes() {
@@ -12,16 +13,7 @@ export default function AppRoutes() {
         <Route path="/" element={<DashboardDispatcher />} />
 
         {/* Syndic Modules */}
-        <Route
-          path="/apartments"
-          element={
-            <ModulePlaceholder
-              title="Gestion des Appartements"
-              moduleName="Administration · Appartements"
-              description="Visualisation du plan d'immeuble, surfaces en m², numéros de lots, assignation de copropriétaires et historique."
-            />
-          }
-        />
+        <Route path="/apartments" element={<ApartmentsPage />} />
         <Route
           path="/owners"
           element={

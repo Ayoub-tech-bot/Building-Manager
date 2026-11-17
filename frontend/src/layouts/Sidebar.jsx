@@ -122,10 +122,9 @@ export default function Sidebar() {
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all ${
-                    isActive
-                      ? 'bg-[#1E392A] text-white font-medium shadow-sm'
-                      : 'text-[#48544A] hover:bg-[#E1DEC8] hover:text-[#18201B]'
+                  `flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all ${isActive
+                    ? 'bg-[#1E392A] text-white font-medium shadow-sm'
+                    : 'text-[#48544A] hover:bg-[#E1DEC8] hover:text-[#18201B]'
                   }`
                 }
               >
@@ -141,11 +140,10 @@ export default function Sidebar() {
                     </div>
                     {item.badge && (
                       <span
-                        className={`text-xs px-1.5 py-0.2 rounded-full font-medium ${
-                          isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-[#DDD9C5] text-[#344036]'
-                        }`}
+                        className={`text-xs px-1.5 py-0.2 rounded-full font-medium ${isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-[#DDD9C5] text-[#344036]'
+                          }`}
                       >
                         {item.badge}
                       </span>
@@ -160,28 +158,6 @@ export default function Sidebar() {
 
       {/* Bottom Section */}
       <div className="p-4 space-y-3">
-        {/* Help Card */}
-        <div className="bg-white/60 border border-[#DDD9C5] rounded-xl p-3 text-xs">
-          <div className="flex items-start gap-2 text-[#465348]">
-            <MessageSquare size={15} className="mt-0.5 text-[#5D6B5F] shrink-0" />
-            <div>
-              <div className="font-semibold text-[#18201B]">Une question ?</div>
-              <div className="text-[11px] text-[#69756A] mt-0.5">
-                {role === ROLES.OWNER
-                  ? 'Votre syndic est à votre écoute.'
-                  : 'Retrouvez les repères de gestion.'}
-              </div>
-              <a
-                href="#guide"
-                className="inline-block mt-1 font-medium text-[#1E392A] hover:underline"
-              >
-                {role === ROLES.OWNER
-                  ? 'Contacter le syndic →'
-                  : 'Consulter le guide →'}
-              </a>
-            </div>
-          </div>
-        </div>
 
         {/* Account Settings */}
         <button className="w-full flex items-center gap-2.5 px-2 py-1 text-xs text-[#525F54] hover:text-[#18201B] transition-colors">

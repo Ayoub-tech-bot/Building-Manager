@@ -19,8 +19,8 @@ import { formatCurrency } from '../../utils/formatters';
 import { SYNDIC_DASHBOARD_DATA } from '../../mock/dashboardMockData';
 
 export default function SyndicDashboard() {
-  const data = SYNDIC_DASHBOARD_DATA;
-
+  const data = SYNIC_DASHBOARD_DATA;
+  D
   return (
     <div className="space-y-6">
       {/* Title & Quick Actions Bar */}
