@@ -40,3 +40,4 @@ export const apartmentApi = {
 };
 
 export default apartmentApi;
+
